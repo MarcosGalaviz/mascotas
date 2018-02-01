@@ -8,6 +8,11 @@
     messagingSenderId: "271458485234"
   };
   firebase.initializeApp(config);
+
+  
+// btnout.addEventListener('click', e => { 
+//     firebase.auth().signOut();
+// });
   
   // Google OAuth Client ID, needed to support One-tap sign-up.
   // Set to null if One-tap sign-up is not supported.

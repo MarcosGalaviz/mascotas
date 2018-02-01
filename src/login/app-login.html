@@ -3,14 +3,9 @@
 <link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 
-
-
-<link rel="import" href="../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../shared-styles.html">
 
 <!-- <script src="https://www.gstatic.com/firebasejs/live/4.3/firebase.js"></script> -->
-
-
 
     <script src="../../config.js"></script>
     <script src="../../common.js"></script>
@@ -27,10 +22,12 @@
 
         </style>
 
-<paper-button raised on-tap="openUi">SignUp</paper-button>
+<paper-button raised on-tap="openUi" hidden="{{logueado}}">SignUp</paper-button>
 
 <paper-dialog id="dialog">
-    <div id="fbUIContainer"></div>
+        <paper-dialog-scrollable>
+            <div id="fbUIContainer"></div>   
+        </paper-dialog-scrollable>
 </paper-dialog>
 
     </template>
@@ -57,7 +54,9 @@
              */
             static get properties() {
                 return {
-
+                    logueado: {
+                        type: Boolean,
+                    },
                 };
             }
 
@@ -80,19 +79,10 @@
                 // Initialize the FirebaseUI Widget using Firebase.
                 var ui = new firebaseui.auth.AuthUI(firebase.auth());
                 // The start method will wait until the DOM is loaded.
-                ui.start(this.$.fbUIContainer, uiConfig);                
-                 
-                 console.log('Logueado: '+ this.logueado);
+                ui.start(this.$.fbUIContainer, uiConfig);                                 
                  this.$.dialog.open(); 
-                 this.dispatchEvent(new CustomEvent('logueado'));             
-            }
-
-            // closeUi() {
-            //   firebase.auth().signOut();
-            //   console.log('ha salido');
-            //   window.location.href = "/view1";
-            //   this.logueado=false;
-            // }
+                //  this.dispatchEvent(new CustomEvent('logueado'));             
+            }            
 
             /**
              * Instance of the element is created/upgraded. Use: initializing state,

@@ -22,8 +22,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-
 <h1>Welcome to My Awesome App</h1>
+
+Usuario:[[user.email]]
 
     <div class="card">
       <div class="circle">1</div>
@@ -36,6 +37,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     class MyView1 extends Polymer.Element {
       static get is() { return 'my-view1'; }
+
+      static get properties() {
+        return {
+
+        };
+      }
+
     }
 
     window.customElements.define(MyView1.is, MyView1);

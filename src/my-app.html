@@ -22,7 +22,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="my-icons.html">
 
+<!-- Firebase -->
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html" />
+<link rel="import" href="../bower_components/polymerfire/firebase-document.html" />
+<link rel="import" href="../bower_components/polymerfire/firebase-query.html" />
+
+<!-- Paper-Elements -->
+
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
 
 <!-- <link type="text/css" rel="stylesheet" href="../bower_components/firebaseui/dist/firebaseui.css" /> -->
 <link rel="import" href="/src/login/app-login.html">
@@ -108,8 +117,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <app-toolbar>
             <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
             <div main-title>My App</div>
-            {{logueado}}
-            <app-login on-logueado="EstaLogueado"></app-login>
+            Usr: [[user.displayName]]
+            <app-login logueado=[[logueado]]></app-login>
+            <!-- <paper-button raised on-tap="closeUi" id="btnout">SignOut</paper-button> -->
             <paper-button raised on-tap="closeUi" hidden="{{!logueado}}" id="btnout">SignOut</paper-button>
           </app-toolbar>
         </app-header>
@@ -147,8 +157,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           logueado: {
                         type: Boolean,
-                        value: false
                     },
+
+          user: Object,
         };
       }
 
@@ -191,9 +202,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               this.logueado=false;
             }
 
-            EstaLogueado(){
-              this.logueado=true;
-              console.log('Logueado!!!!');
+            ready(){
+              super.ready();
+              firebase.auth().onAuthStateChanged (firebaseUser =>{
+                  if(firebaseUser){
+                      //btnout.classList.remove('hide');
+                      console.log(firebaseUser);
+                      this.user=firebaseUser;
+                      //superemail.innerHTML = firebaseUser.email;
+                      this.logueado=true;
+                  }else{
+                      console.log('not login');
+                      //btnout.classList.add('hide');
+                      this.logueado=false;
+                  }
+              });
             }
     }
 
