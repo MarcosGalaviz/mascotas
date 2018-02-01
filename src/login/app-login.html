@@ -1,0 +1,120 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+
+
+
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../shared-styles.html">
+
+<!-- <script src="https://www.gstatic.com/firebasejs/live/4.3/firebase.js"></script> -->
+
+
+
+    <script src="../../config.js"></script>
+    <script src="../../common.js"></script>
+    <!-- <script src="../src/app.js"></script> -->
+
+    <script src="../../bower_components/firebaseui/dist/firebaseui.js"></script>
+
+<dom-module id="app-login">
+    <template>
+        <style include="shared-styles">
+            :host {
+                display: block
+            }                      
+
+        </style>
+
+<paper-button raised on-tap="openUi">SignUp</paper-button>
+
+<paper-dialog id="dialog">
+    <div id="fbUIContainer"></div>
+</paper-dialog>
+
+    </template>
+
+    <script>
+        /**
+         * `app-login` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AppLogin extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'app-login';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+
+                };
+            }
+
+
+            openUi() {
+                //this.logueado=true;
+                var uiConfig = {
+                    signInSuccessUrl: '/view1',
+                    signInOptions: [
+                        // Leave the lines as is for the providers you want to offer your users.
+                        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+                        //firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+                        //firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+                        firebase.auth.EmailAuthProvider.PROVIDER_ID
+                    ],
+                    // Terms of service url.
+                    tosUrl: '/TOS'
+                };
+
+                // Initialize the FirebaseUI Widget using Firebase.
+                var ui = new firebaseui.auth.AuthUI(firebase.auth());
+                // The start method will wait until the DOM is loaded.
+                ui.start(this.$.fbUIContainer, uiConfig);                
+                 
+                 console.log('Logueado: '+ this.logueado);
+                 this.$.dialog.open(); 
+                 this.dispatchEvent(new CustomEvent('logueado'));             
+            }
+
+            // closeUi() {
+            //   firebase.auth().signOut();
+            //   console.log('ha salido');
+            //   window.location.href = "/view1";
+            //   this.logueado=false;
+            // }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                // Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                // });
+            }
+        }
+
+        window.customElements.define(AppLogin.is, AppLogin);
+    </script>
+</dom-module>
