@@ -22,27 +22,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="my-icons.html">
 
-<!-- iron -->
-<link rel="import" href="../bower_components/iron-meta/iron-meta.html">
-
-<!-- icons -->
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../bower_components/iron-icons/social-icons.html">
-
 <!-- Firebase -->
 <link rel="import" href="../bower_components/polymerfire/polymerfire.html" />
 <link rel="import" href="../bower_components/polymerfire/firebase-document.html" />
 <link rel="import" href="../bower_components/polymerfire/firebase-query.html" />
-<link rel="import" href="../bower_components/polymerfire/firebase-messaging.html" />
 
 <!-- Paper-Elements -->
-<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="../bower_components/paper-card/paper-card.html">
-<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
-<link rel="import" href="../bower_components/paper-input/paper-input.html">
 
 <!-- <link type="text/css" rel="stylesheet" href="../bower_components/firebaseui/dist/firebaseui.css" /> -->
 <link rel="import" href="/src/login/app-login.html">
@@ -109,18 +98,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         data="{{routeData}}"
         tail="{{subroute}}">
     </app-route>
-
-    <firebase-app
-      name="mascotas",
-      api-key="AIzaSyCkoodUycFyBXcUKhG95miR615dHhQe0PY",
-      auth-domain="mascotas-6ef9c.firebaseapp.com",
-      database-url="https://mascotas-6ef9c.firebaseio.com",
-      messaging-sender-id="271458485234",
-      app="{{fbapp}}">
-    </firebase-app>
-
-    <iron-meta key="fbapp" value="[[fbapp]]"></iron-meta>
-    <iron-meta key="usuario" value="[[user]]"></iron-meta>
 
     <app-drawer-layout fullbleed narrow="{{narrow}}">
       <!-- Drawer content -->
@@ -273,9 +250,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               } else {
                   console.log('El usuario ya existe sin cambios')
               }
-          });            
-          this.user=user;                                                                                                                  
-          //console.log(user);
+          });                                                                                                                             
       }                                    
     }
 
