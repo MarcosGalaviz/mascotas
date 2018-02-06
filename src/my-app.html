@@ -225,7 +225,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               this.logueado=false;
             }
 
-<<<<<<< HEAD
       ready(){
         super.ready();
         var that=this;
@@ -278,24 +277,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.user=user;                                                                                                                  
           //console.log(user);
       }                                    
-=======
-            ready(){
-              super.ready();
-              firebase.auth().onAuthStateChanged (firebaseUser =>{
-                  if(firebaseUser){
-                      //btnout.classList.remove('hide');
-                      console.log(firebaseUser);
-                      this.user=firebaseUser;
-                      //superemail.innerHTML = firebaseUser.email;
-                      this.logueado=true;
-                  }else{
-                      console.log('not login');
-                      //btnout.classList.add('hide');
-                      this.logueado=false;
-                  }
-              });
-            }
->>>>>>> parent of e9059c4... Creacion de usuarios en tablas firebase
     }
 
     window.customElements.define(MyApp.is, MyApp);
