@@ -51,4 +51,37 @@ exports.onDeleteUser=functions.auth.user()
     const uid = event.data.uid;
     let ref=admin.database().ref('/users/${uid}');
     return ref.update({isDeleted: true});
-})
+});
+
+
+exports.createTodo = functions.firestore.document('todos/{todoId}').onCreate(event => {
+    var newValue = event.data.data();
+    var message = "New Todo Added : " + newValue.title;
+    //sendMessage(message);
+    pushMessage(message);
+    return true;
+  });
+
+  // Function to push notification to a topic.
+function pushMessage(message) {
+    var payload = {
+      notification: {
+        title: message,
+      }
+    };
+  
+    admin.messaging().sendToTopic("notifications", payload)
+    .then(function(response) {
+      console.log("Successfully sent message:", response);
+    })
+    .catch(function(error) {
+      console.log("Error sending message:", error);
+    });
+  }
+  
+
+
+
+
+
+

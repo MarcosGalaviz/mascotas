@@ -1,0 +1,156 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-messaging.html">
+<dom-module id="app-notification">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+            .card-contents {
+                margin: 10px;
+                padding-bottom: 10px;
+                font-size: 14px;
+            }
+            
+            .label {
+                color: gray
+            }
+        </style>
+          <!-- firebase messaging -->
+        <firebase-messaging
+            app-name="mascotas"
+            id="messaging"
+            on-message="_onFcmMessage"
+            token="{{token}}">
+        </firebase-messaging>
+
+        <firebase-document 
+            app-name="mascotas"
+            path="/users/[[user.uid]]/token" 
+            data="[[token]]">
+        </firebase-document>
+
+        <paper-card>
+            <div class="card-contents">
+              <h2>Messaging</h2>
+              <p>Token: [[messaging.token]]</p>
+            <div>
+              <p class="label">Here is token for the browser</p>
+              <paper-input label="Token" value="{{token}}"></paper-input>
+            </div>
+            </div>
+          </paper-card>
+          <paper-toast id="toast" text="[[message]]"></paper-toast>
+
+    </template>
+    <script>
+        /**
+         * `app-notification` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AppNotification extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'app-notification';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    token: {
+                        type: String,
+                    },
+                    user: {
+                        type: Object,
+                    },
+                    fbapp: {
+                        type: Object,
+                    },
+
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+                // this.$.messaging.requestPermission().catch(err => {
+                //     console.error(err);
+                // });
+                this.fbapp = document.createElement('iron-meta').byKey('fbapp');
+                this.user = document.createElement('iron-meta').byKey('usuario');
+                var that=this;
+
+                this.$.messaging.requestPermission().then(function() {
+                // permission was granted
+                // console.log('Permiso concedido para mensajes push: ')
+                // console.log(that.user.uid + that.user.displayName);
+
+                //Guardo el token en BD
+                that.guardaToken();
+
+                }, function(err) {
+                // permission was denied
+                console.log('Sin permiso para push notifications')
+                });
+                
+                Polymer.RenderStatus.afterNextRender(this, function() {                    
+                });
+            }
+
+            guardaToken () {
+                var that=this;
+                console.log('Entrando a funcion GuardarToken: ' + this.user.uid)
+                var refToken = this.fbapp.database().ref('/users/' + this.user.uid);
+                console.log(this.fbapp);
+                var datosUsuario = {};                        
+                console.log(this.token);
+
+                console.log('token: ' + 'El Token');
+
+                var objInsertar = {};
+                objInsertar['/token/' + 'El Token']=datosUsuario;  
+                console.log(objInsertar);
+            
+                refToken.update(objInsertar)               
+                .then(that.tokenGuardado.bind(this))
+                .catch(that.errorAlGuardar.bind(this))                            
+            }
+
+            tokenGuardado() {
+                console.log('Token guardado');
+                //this.close();
+            }
+
+            errorAlGuardar() {
+                console.log('Error en guardado del token')
+            }
+
+            _onFcmMessage(e, data) {
+                const noti = data.message.notification;
+                this.message = `${noti.title} ${noti.body}`;
+                this.$.toast.open();
+            }
+        }
+
+        window.customElements.define(AppNotification.is, AppNotification);
+    </script>
+</dom-module>
