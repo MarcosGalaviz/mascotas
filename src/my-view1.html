@@ -32,8 +32,54 @@ Usuario:[[user.email]]
       <p>Ut labores minimum atomorum pro. Laudem tibique ut has.</p>
       <p>Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Cu mei vide viris gloriatur, at populo eripuit sit.</p>
     </div>
-  </template>
 
+    <div id="sign-in-status"></div>
+    <div id="sign-in"></div>
+    <div id="account-details"></div>
+    
+  </template>
+  <script type="text/javascript">
+    initApp = function() {
+      firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+          // User is signed in.
+          var displayName = user.displayName;
+          var email = user.email;
+          var emailVerified = user.emailVerified;
+          var photoURL = user.photoURL;
+          var uid = user.uid;
+          var phoneNumber = user.phoneNumber;
+          var providerData = user.providerData;
+          user.getIdToken().then(function(accessToken) {
+            document.getElementById('sign-in-status').textContent = 'Signed in';
+            document.getElementById('sign-in').textContent = 'Sign out';
+            document.getElementById('account-details').textContent = JSON.stringify({
+              displayName: displayName,
+              email: email,
+              emailVerified: emailVerified,
+              phoneNumber: phoneNumber,
+              photoURL: photoURL,
+              uid: uid,
+              accessToken: accessToken,
+              providerData: providerData
+            }, null, '  ');
+          });
+        } else {
+          // User is signed out.
+          document.getElementById('sign-in-status').textContent = 'Signed out';
+          document.getElementById('sign-in').textContent = 'Sign in';
+          document.getElementById('account-details').textContent = 'null';
+        }
+      }, function(error) {
+        console.log(error);
+      });
+    };
+  
+    window.addEventListener('load', function() {
+      initApp()
+    });
+  </script>
+  
   <script>
     class MyView1 extends Polymer.Element {
       static get is() { return 'my-view1'; }
@@ -45,7 +91,10 @@ Usuario:[[user.email]]
       }
 
     }
-
+    window.addEventListener('load', function() {
+      initApp()
+    });
+    
     window.customElements.define(MyView1.is, MyView1);
   </script>
 </dom-module>

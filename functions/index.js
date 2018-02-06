@@ -51,4 +51,55 @@ exports.onDeleteUser=functions.auth.user()
     const uid = event.data.uid;
     let ref=admin.database().ref('/users/${uid}');
     return ref.update({isDeleted: true});
-})
+});
+
+
+exports.createTodo = functions.firestore.document('todos/{todoId}').onCreate(event => {
+    var newValue = event.data.data();
+    var message = "New Todo Added : " + newValue.title;
+    sendMessage(message);
+    pushMessage(message);
+    return true;
+  });
+  
+  exports.updateTodo = functions.firestore.document('todos/{todoId}').onUpdate(event => {
+    var newValue = event.data.data();
+    var message;
+    if (newValue.checked) {
+      message = newValue.title + " is marked as checked";
+    } else {
+      message = newValue.title + " is marked as unchecked";
+    }
+    sendMessage(message);
+    pushMessage(message);
+    console.log("Udpated Todo :", JSON.stringify(newValue));
+    return true;
+  });
+  
+  // Function to send notification to a slack channel.
+  function sendMessage(message) {
+    webhook.send(message, function(err, header, statusCode, body) {
+      if (err) {
+        console.log('Error:', err);
+      } else {
+        console.log('Received', statusCode, 'from Slack');
+      }
+    });
+  }
+  
+  // Function to push notification to a topic.
+  function pushMessage(message) {
+    var payload = {
+      notification: {
+        title: message,
+      }
+    };
+  
+    admin.messaging().sendToTopic("notifications", payload)
+    .then(function(response) {
+      console.log("Successfully sent message:", response);
+    })
+    .catch(function(error) {
+      console.log("Error sending message:", error);
+    });
+  }
