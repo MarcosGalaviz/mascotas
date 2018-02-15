@@ -42,6 +42,8 @@ exports.createUser= functions.auth.user()
     }
     console.log(newUser);
     let ref=admin.database().ref('/users/${uid}');
+    var message = "Usuario agregado : ";
+    pushMessage(message);
     return ref.set(newUser);
 });
 
@@ -53,53 +55,29 @@ exports.onDeleteUser=functions.auth.user()
     return ref.update({isDeleted: true});
 });
 
+//Pruebas de funciones para enviar mensajes push
 
-exports.createTodo = functions.firestore.document('todos/{todoId}').onCreate(event => {
-    var newValue = event.data.data();
-    var message = "New Todo Added : " + newValue.title;
-    sendMessage(message);
-    pushMessage(message);
-    return true;
-  });
-  
-  exports.updateTodo = functions.firestore.document('todos/{todoId}').onUpdate(event => {
-    var newValue = event.data.data();
-    var message;
-    if (newValue.checked) {
-      message = newValue.title + " is marked as checked";
-    } else {
-      message = newValue.title + " is marked as unchecked";
-    }
-    sendMessage(message);
-    pushMessage(message);
-    console.log("Udpated Todo :", JSON.stringify(newValue));
-    return true;
-  });
-  
-  // Function to send notification to a slack channel.
-  function sendMessage(message) {
-    webhook.send(message, function(err, header, statusCode, body) {
-      if (err) {
-        console.log('Error:', err);
-      } else {
-        console.log('Received', statusCode, 'from Slack');
-      }
+exports.sendNotification=functions.database.ref('/users/{uid}').onWrite(event => {
+    const uuid=event.params.uid;
+    let userData=event.data.val();
+
+    console.log('usuario para enviar notificacion', uuid);
+
+    var user= admin.database().ref(`users/${uuid}`);
+    var ref= admin.database().ref(`users/${uuid}/token`);
+    return ref.once("value", function(snapshot){
+        const payload={
+            notification:{
+                title: 'Titulo de notificacion',
+                body: `${userData.nombre} , ${userData.email} : is now following you.`,
+                click_action: "https://systam.mx",
+                icon: `${userData.photoURL}`,
+                sound: 'default',
+            }
+        };
+        admin.messaging().sendToDevice(snapshot.val(), payload)
+    },
+    function(errorObject){
+        console.log("error: "+ errorObject.code);
     });
-  }
-  
-  // Function to push notification to a topic.
-  function pushMessage(message) {
-    var payload = {
-      notification: {
-        title: message,
-      }
-    };
-  
-    admin.messaging().sendToTopic("notifications", payload)
-    .then(function(response) {
-      console.log("Successfully sent message:", response);
-    })
-    .catch(function(error) {
-      console.log("Error sending message:", error);
-    });
-  }
+});

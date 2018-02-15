@@ -1,5 +1,9 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../bower_components/polymerfire/firebase-messaging.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-query.html">
+<link rel="import" href="../../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <dom-module id="app-notification">
     <template>
         <style>
@@ -15,33 +19,61 @@
             .label {
                 color: gray
             }
+
+            paper-toast {
+            width: 100%;
+            text-align: right;
+            --paper-toast-background-color: red;
+            --paper-toast-color: white;
+            } 
         </style>
           <!-- firebase messaging -->
         <firebase-messaging
             app-name="mascotas"
+            active="{{active}}"
             id="messaging"
             on-message="_onFcmMessage"
+            status-known="{{statusKnown}}"
+            last-message="{{lastMessage}}"
+            push-supported="{{soportado}}"
             token="{{token}}">
         </firebase-messaging>
 
-        <firebase-document 
+        <!-- <firebase-document 
             id=firedocument
             app-name="mascotas"
             path="/users/[[user.uid]]/token" 
             data="[[token]]">
-        </firebase-document>
+        </firebase-document> -->
+
+        <!-- <firebase-document id="document2"
+            app-name="mascotas"
+            path="/users/{{user.uid}}"
+            data="{{usuariologueado}}">
+        </firebase-document> -->
+
+        <!-- <firebase-query app-name="mascotas"
+                        path="/users/[[user.uid]]"
+                        data="{{eltoken}}">
+        </firebase-query> -->
 
         <paper-card>
             <div class="card-contents">
-              <h2>Messaging</h2>
-              <p>Token: [[messaging.token]]</p>
-            <div>
-              <p class="label">Here is token for the browser</p>
-              <paper-input label="Token" value="{{token}}"></paper-input>
+              <h2>Envio de notificaciones</h2>
+              <p>usuario: [[usuariologueado.nombre]]</p>
+              <paper-toggle-button id="notificar" checked={{usuariologueado.notificacionActiva}}>Activar Notificacion</paper-toggle-button>
+              
+              <p>Navegador soporta FCM: [[soportado]]</p>
+              <p>Token: [[token]]</p>
+                <div>
+                <p class="label">Here is token for the browser</p>
+                <paper-input label="Token" value="{{token}}"></paper-input>
+                </div>
             </div>
-            </div>
+            
           </paper-card>
           <paper-toast id="toast" text="[[message]]"></paper-toast>
+          <paper-button raised on-click="RevisaToken">Revisar Token</paper-button>
 
     </template>
     <script>
@@ -69,13 +101,15 @@
                     token: {
                         type: String,
                     },
+                    message: {
+                        type: String,
+                    },
                     user: {
                         type: Object,
                     },
                     fbapp: {
                         type: Object,
-                    },
-
+                    }              
                 };
             }
 
@@ -92,48 +126,40 @@
              * Use for one-time configuration of your component after local DOM is initialized. 
              */
             ready() {
-                super.ready();
-                // this.$.messaging.requestPermission().catch(err => {
-                //     console.error(err);
-                // });
+                super.ready();  
                 this.fbapp = document.createElement('iron-meta').byKey('fbapp');
-                this.user = document.createElement('iron-meta').byKey('usuario');
-                var that=this;
-
-                this.$.messaging.requestPermission().then(function() {
-                // permission was granted
-                // console.log('Permiso concedido para mensajes push: ')
-                // console.log(that.user.uid + that.user.displayName);
-
-                //Guardo el token en BD
-                that.guardaToken();
-
-                }, function(err) {
-                // permission was denied
-                console.log('Sin permiso para push notifications')
-                });
-                
+                // this.user = document.createElement('iron-meta').byKey('usuario');
+                console.log('Entrando a READY');
+                console.log(this.user);
                 Polymer.RenderStatus.afterNextRender(this, function() {                    
-                });
+                });                                                
+                this.$.notificar.addEventListener('click', this.cambioCheck.bind(this));             
             }
 
-            guardaToken () {
-                var that=this;
-                console.log('Entrando a funcion GuardarToken: ' + this.user.uid)
-                var refToken = this.fbapp.database().ref('/users/' + this.user.uid);
-                console.log(this.fbapp);
-                var datosUsuario = {};                        
-                console.log(this.token);
+            RevisaToken(){
+                console.log('token en boton: ', this.tokenVigente);
+                console.log('token en token: ', this.token);
+            }
 
-                console.log('token: ' + 'El Token');
+            guardaToken () {   
+                console.log('Entrando a guardar token: ', this.$.messaging.token)             
+                var that=this;                
+                var refGuardar = this.fbapp.database().ref();
+                var datosUsuario=this.usuariologueado;
+                datosUsuario.token=this.token;
+                datosUsuario.notificacionActiva=true;
 
-                var objInsertar = {};
-                objInsertar['/token/' + 'El Token']=datosUsuario;  
-                console.log(objInsertar);
-            
-                refToken.update(objInsertar)               
-                .then(that.tokenGuardado.bind(this))
-                .catch(that.errorAlGuardar.bind(this))                            
+                if (this.$.notificar.checked===true){
+                    datosUsuario.notificacionActiva=true;
+                }else{
+                    datosUsuario.notificacionActiva=false;
+                }
+                var objInsertar={};
+                objInsertar['/users/' + this.user.uid]=datosUsuario;
+
+                refGuardar.update(objInsertar)
+                .then(this.tokenGuardado.bind(this))
+                .catch(this.errorAlGuardar.bind(this))                                                                             
             }
 
             tokenGuardado() {
@@ -147,11 +173,36 @@
 
             _onFcmMessage(e, data) {
                 const noti = data.message.notification;
-                this.message = `${noti.title} ${noti.body}`;
+                this.message = `${noti.title} ${noti.body} : mensaje`;
                 this.$.toast.open();
             }
-        }
 
+            cambioCheck(){ 
+                this.fbapp = document.createElement('iron-meta').byKey('fbapp');
+                //this.user = document.createElement('iron-meta').byKey('usuario'); 
+                var that=this;
+                if (!this.user){
+                    this.message='No hay usuario Logueado, Registrese!'
+                    this.$.toast.open();
+                }else{
+                    if(this.$.notificar.checked===true){
+                        this.$.messaging.requestPermission().then(function() {
+                            // permission was granted
+                            console.log('Permiso concedido para mensajes push: Recibe: '+ that.usuariologueado.nombre + 'notificacion: ' +that.usuariologueado.notificacionActiva);
+                            that.usuariologueado.notificacionActiva=true;
+                            //Guardo el token en BD
+                            }, function(err) {
+                            // permission was denied
+                            console.log('Sin permiso para push notifications')
+                            });
+                    }else{
+                        console.log('Evento checked en : '+ this.$.notificar.checked);
+                        this.usuariologueado.notificacionActiva=false;
+                    }
+                }
+            }
+        }
+       
         window.customElements.define(AppNotification.is, AppNotification);
     </script>
 </dom-module>

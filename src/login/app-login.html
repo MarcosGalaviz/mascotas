@@ -2,33 +2,64 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animations.html">
+
 
 <link rel="import" href="../shared-styles.html">
 
-<!-- <script src="https://www.gstatic.com/firebasejs/live/4.3/firebase.js"></script> -->
-
-    <script src="../../config.js"></script>
-    <script src="../../common.js"></script>
-    <!-- <script src="../src/app.js"></script> -->
-
-    <script src="../../bower_components/firebaseui/dist/firebaseui.js"></script>
 
 <dom-module id="app-login">
     <template>
         <style include="shared-styles">
             :host {
                 display: block
-            }                      
+            }
 
+            paper-button > * {
+                vertical-align: middle;
+                text-transform: none;
+            }
+                 paper-button.google {                
+                background-color:#D50F25;
+                color: white;             
+              }
+
+               paper-button.facebook {                
+                background-color:#3b5998;
+                color: white;               
+              }
         </style>
+ <paper-icon-button icon="account-circle" on-tap="abrirDrop" hidden="{{logueado}}"></paper-icon-button>
 
-<paper-button raised on-tap="openUi" hidden="{{logueado}}" class="green">Entrar</paper-button>
-
-<paper-dialog id="dialog">
-        <paper-dialog-scrollable>
-            <div id="fbUIContainer"></div>   
-        </paper-dialog-scrollable>
-</paper-dialog>
+ <iron-dropdown horizontal-align="right"
+                vertical-align="top"
+                vertical-offset="40"
+                id="dropd"
+                open-animation-config="[[animacionEntrada]]"
+                close-animation-config="[[animacionSalida]]">
+                <slot name="dropdown-content" slot="dropdown-content">
+                    <div class="dropdown-content">
+                        <paper-card heading="Ingrese con su cuenta">
+                            <div class="card-content">
+                                <paper-button raised class="google" on-tap="entergoogle" disabled="[[disabled]]">
+                                    <iron-icon icon="account-circle"></iron-icon>
+                                    <span>Entar con Google</span>
+                                </paper-button>
+               
+                                <paper-button raised class="facebook" on-tap="enterface" disabled="[[disabled]]">
+                                    <iron-icon icon="account-circle"></iron-icon>
+                                    <span>Entrar con Facebook</span>
+                                </paper-button>
+                            </div>                           
+                        </paper-card>
+                        <!--<paper-button raised on-tap="loguearse">Loguearse con Google</paper-button>-->             
+                    </div>
+                </slot>    
+ </iron-dropdown>
 
     </template>
 
@@ -57,32 +88,43 @@
                     logueado: {
                         type: Boolean,
                     },
+
+                    animacionEntrada: {
+                        type: Array,
+                        value: function () {
+                            return [
+                            {
+                                name: 'fade-in-animation',
+                                timing: {
+                                    duration: 1500
+                                }
+                            }
+                            ]
+                        }
+                    },
+
+                    animacionSalida: {
+                        type: Array,
+                        value: function() {
+                            return [
+                                {
+                                    name: 'fade-out-animation',
+                                    timing: {
+                                        duration: 1000,
+                                        delay: 1000
+                                    }
+                                },
+                                {
+                                    name: 'slide-down-animation',
+                                    timing: {
+                                        duration: 1200
+                                    }
+                                },
+                            ]
+                        }
+                    },
                 };
             }
-
-
-            openUi() {
-                //this.logueado=true;
-                var uiConfig = {
-                    signInSuccessUrl: '/view1',
-                    signInOptions: [
-                        // Leave the lines as is for the providers you want to offer your users.
-                        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-                        firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-                        firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-                        firebase.auth.EmailAuthProvider.PROVIDER_ID
-                    ],
-                    // Terms of service url.
-                    tosUrl: '/TOS'
-                };
-
-                // Initialize the FirebaseUI Widget using Firebase.
-                var ui = new firebaseui.auth.AuthUI(firebase.auth());
-                // The start method will wait until the DOM is loaded.
-                ui.start(this.$.fbUIContainer, uiConfig);                                 
-                 this.$.dialog.open(); 
-                //  this.dispatchEvent(new CustomEvent('logueado'));             
-            }            
           
             /**
              * Instance of the element is created/upgraded. Use: initializing state,
@@ -103,6 +145,28 @@
                     
                 // });
             }
+
+            entergoogle(){
+                this.proveedor = "google";
+                //console.log("Entrando a funcion entergoogle cadena: " + this.proveedor)
+                this.signIn();
+            }
+
+            enterface () {
+                this.proveedor = "facebook";
+                //console.log("Entrando a funcion enterfacebook cadena: " + this.proveedor)         
+                this.signIn();
+            }
+
+            signIn () {                
+                this.dispatchEvent(new CustomEvent('login')); 
+                this.$.dropd.close();                  
+            }
+
+            abrirDrop () {
+                this.$.dropd.open();
+            }
+
         }
 
         window.customElements.define(AppLogin.is, AppLogin);

@@ -27,4 +27,6 @@ module.exports = {
       },
     },
   ],
+  navigateFallback: '/index.html',
+  navigateFallbackWhitelist: [/^\/home\//, /^\/other\//]
 };

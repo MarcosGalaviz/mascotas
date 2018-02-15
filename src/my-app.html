@@ -118,9 +118,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       app="{{fbapp}}">
     </firebase-app>
 
+    <firebase-auth id="auth"
+                     app-name="mascotas"
+                     provider="google"
+                     signed-in="{{signedIn}}"
+                     user="{{user}}">
+      </firebase-auth>
+
+      <firebase-document app-name="mascotas"
+          path="/users/{{user.uid}}"
+          data="{{usuariologueado}}">
+    </firebase-document>
+
+    <firebase-messaging
+            app-name="mascotas"
+            active="{{active}}"
+            id="messaging"
+            on-message="_onFcmMessage"
+            status-known="{{statusKnown}}"
+            last-message="{{lastMessage}}"
+            push-supported="{{soportado}}"
+            token="{{token}}">
+        </firebase-messaging>
+
     <iron-meta key="fbapp" value="[[fbapp]]"></iron-meta>
     <iron-meta key="usuario" value="[[user]]"></iron-meta>
-
+   
     <app-drawer-layout fullbleed narrow="{{narrow}}">
       <!-- Drawer content -->
       <app-drawer id="drawer" slot="drawer" swipe-open="[[narrow]]">
@@ -140,9 +163,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
             <div main-title>My App</div>
             Usr: [[user.displayName]]
-            <app-login logueado=[[logueado]]></app-login>
+            <app-login on-login="signIn" logueado=[[logueado]] id="applogin"></app-login>
             <!-- <paper-button raised on-tap="closeUi" id="btnout">SignOut</paper-button> -->
-            <paper-button raised class="pink" on-tap="closeUi" hidden="{{!logueado}}" id="btnout">Salir</paper-button>
+            <paper-button raised class="pink" on-tap="logout" hidden="{{!logueado}}" id="btnout">Salir</paper-button>
           </app-toolbar>      
         </app-header>
 
@@ -152,7 +175,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             fallback-selection="view404"
             role="main">
           <my-view1 name="view1"></my-view1>
-          <my-view2 name="view2"></my-view2>
+          <my-view2 name="view2" user={{user}} usuariologueado={{usuariologueado}}></my-view2>
           <my-view3 name="view3"></my-view3>
           <my-view404 name="view404"></my-view404>
         </iron-pages>
@@ -176,12 +199,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           // This shouldn't be neccessary, but the Analyzer isn't picking up
           // Polymer.Element#rootPath
           rootPath: String,
-
           logueado: {
-                        type: Boolean,
+                      type: Boolean,
+                      value:false
                     },
           user: Object,
           fbapp: Object,
+          activaNotificacion: {
+            type:Boolean,
+            value:false
+          }
         };
       }
 
@@ -216,66 +243,108 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.page = 'view404';
       }
 
-      closeUi() {
-        //var ui = new firebaseui.auth.AuthUI();
-        firebase.auth().signOut();
-        console.log('ha salido');
-        window.location.href = "/view1";
-        this.logueado=false;
+      logout() {
+        var that = this;
+        console.log("Saliendo")
+        this.$.auth.signOut();
+        this.logueado = false;
+        //that.fire('feedback-positivo', 'Adios, Regresa Pronto');
+        //var ui = new firebaseui.auth.AuthUI();       
       }
 
       ready(){
-        super.ready();
+        super.ready();  
         var that=this;
-        firebase.auth().onAuthStateChanged(function(user) {
-        if (user) {                
-            // User is signed in.              
-            // var displayName = user.displayName;       
-            user.getIdToken().then(function(accessToken) {                  
-              that.saveProfile(user);              
-              that.logueado=true;
-            });
-          } else 
-          {
-              console.log('not login');
-              that.logueado=false;
-          }
-        }, function(error) {
-          console.log(error);
-        });                    
+        // this.user=user;
+          this.$.messaging.requestPermission().then(function() {
+                    // permission was granted                    
+                    console.log('Permiso concedido para mensajes push: ' +  that.token);                
+                    //Guardo el token en BD
+                    that.activaNotificacion=true;
+                    // console.log('Profile1: ', that.token);                    
+                    }, function(err) {
+                    // permission was denied
+                    that.activaNotificacion=false;
+                    console.log('Sin permiso para push notifications');
+                    });
       }         
 
-      saveProfile(user) {
-          //console.log('Entrando saveProfile ');
-          var fechaalta = new Date();
+      signIn() {
           var that = this;
-          var usuariocreado = firebase.database().ref('/users/' + user.uid);
+          console.log('Entrando a signIn en my-app')
+          this.$.auth.signInWithPopup()
+          .then(function (res) {
+              //that.fire('feedback-positivo', 'Has iniciado sesión');
+              that.logueado=true;
+              //console.log('has iniciado sesion, logueado: '+ that.logueado)
+              that.saveProfile(res.user);           
+          })
+          .catch(function (error) {
+              console.log('Error', error.message, error.code);
+          });          
+      }
+
+      saveProfile(user) {
+        this.user=user;          
+          var that= this;
+        var fechaalta = new Date();
+          var usuariocreado = this.fbapp.database().ref('/users/' + that.user.uid);
           // Esto lo hago para que si el usuario ya existe no se guarde otra vez sus valores y no reemplazarlo.
           usuariocreado.once("value", function (snapshot) {
               var a = snapshot.exists();
               if (a === false) {
-                      firebase.database().ref('/users/' + user.uid).set({
-                      nombre: user.displayName,
-                      email: user.email,
-                      photoURL: user.photoURL,
-                      //provider: that.proveedor,
-                      fechaalta: fechaalta.getTime(),
-                      administrador: false,
-                      nombreinterno: user.displayName
-                  })
+                  // console.log('entrando a grabar: ', that.activaNotificacion)
+                  var refGrabar=that.fbapp.database().ref();
+                  var tokenNuevo=that.token;
+
+                  var nuevoToken={
+                    tokenNuevo:true
+                  };
+
+                  var datosUsuario={
+                    nombre: that.user.displayName,
+                    email: that.user.email,
+                    photoURL: that.user.photoURL,
+                    //provider: that.proveedor,
+                    notificacionActiva: that.activaNotificacion,
+                    fechaalta: fechaalta.getTime(),
+                    token: that.token,
+                    nombreinterno: that.user.displayName
+                  };
+
+                  var objInsertar={};
+                  objInsertar['users/'+that.user.uid]=datosUsuario;
+                  //objInsertar['users/'+that.user.uid+'/tokens']=nuevoToken;
+
+                  refGrabar.update(objInsertar)
                   .then(function () {
                       console.log('perfil guardado')
                   })
                   .catch(function () {
                       console.log('no he podido.... perfil')
                   })
-              } else {
-                  console.log('El usuario ya existe sin cambios')
+
+              //       that.fbapp.database().ref('/users/' + that.user.uid).set({
+              //       nombre: that.user.displayName,
+              //       email: that.user.email,
+              //       photoURL: that.user.photoURL,
+              //       notificacionActiva: that.activaNotificacion,
+              //       fechaalta: fechaalta.getTime(),
+              //       token: that.token,
+              //       nombreinterno: that.user.displayName
+              //     })
+              //     .then(function () {
+              //         console.log('perfil guardado')
+              //     })
+              //     .catch(function () {
+              //         console.log('no he podido.... perfil')
+              //     })
+              // } 
               }
-          });            
-          this.user=user;                                                                                                                  
-          //console.log(user);
-      }                                    
+          });   
+        
+      }     
+
     }
    
     window.customElements.define(MyApp.is, MyApp);
